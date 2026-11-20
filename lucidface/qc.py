@@ -82,7 +82,8 @@ def weights(qc: dict, fl: dict, fps: float, ramp_s: float = 0.25) -> np.ndarray:
     # widen the zero regions by the ramp, then ramp linearly so a flagged frame is fully original
     z = np.convolve((w == 0).astype(np.float32), np.ones(2 * r + 1), mode="same") > 0
     k = np.ones(2 * r + 1) / (2 * r + 1)
-    return np.clip(np.convolve((~z).astype(np.float32), k, mode="same"), 0, 1).astype(np.float32)
+    keep = np.pad((~z).astype(np.float32), r, mode="edge")  # edge padding: no dip at start/end
+    return np.clip(np.convolve(keep, k, mode="valid"), 0, 1).astype(np.float32)
 
 
 def ranges(mask: np.ndarray) -> list[tuple[int, int]]:

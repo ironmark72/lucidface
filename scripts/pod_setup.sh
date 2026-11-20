@@ -12,7 +12,6 @@ export PIP_BREAK_SYSTEM_PACKAGES=1
 mkdir -p "$M"
 pip install -q -e ".[bench,dev]"
 pip install -q --no-deps facenet-pytorch
-pip install -q gdown
 
 if [ ! -d "$M/CodeFormer" ]; then
   git clone --depth 1 https://github.com/sczhou/CodeFormer "$M/CodeFormer"
@@ -21,10 +20,7 @@ if [ ! -d "$M/CodeFormer" ]; then
 fi
 if [ ! -d "$M/Restormer" ]; then
   git clone --depth 1 https://github.com/swz30/Restormer "$M/Restormer"
-  # weights live in a Google Drive folder linked from Defocus_Deblurring/pretrained_models/README.md
-  (cd "$M/Restormer/Defocus_Deblurring/pretrained_models" && \
-   gdown --folder https://drive.google.com/drive/folders/1bRBG8DG_72AGA6-eRePvChlT5ZO4cwJ4 -O . || \
-   echo "Restormer weights: download single_image_defocus_deblurring.pth by hand into this folder")
+  wget -q -O "$M/Restormer/Defocus_Deblurring/pretrained_models/single_image_defocus_deblurring.pth"     https://github.com/swz30/Restormer/releases/download/v1.0/single_image_defocus_deblurring.pth
 fi
 if [ "${WITH_GFPGAN:-0}" = 1 ]; then
   pip install -q gfpgan
