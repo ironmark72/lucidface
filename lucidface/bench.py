@@ -28,17 +28,18 @@ import torch
 from . import geometry as G
 
 # All public domain (US federal government works). Credits are shown in docs/BENCHMARK.md.
+# start/dur pick a window where one face is on screen the whole time (found with a 1 fps face scan).
 CLIPS = [
-    dict(id="potus2015", start=20, dur=20, credit="The White House (PD-USGov-POTUS)",
+    dict(id="potus2015", start=138, dur=20, credit="The White House (PD-USGov-POTUS)",
          url="https://upload.wikimedia.org/wikipedia/commons/8/85/2015-02-07_President_Obama%27s_Weekly_Address.webm"),
-    dict(id="nasa_murthy", start=10, dur=20, credit="NASA Goddard SVS 14623 (public domain)",
+    dict(id="nasa_murthy", start=37, dur=20, credit="NASA Goddard SVS 14623 (public domain)",
          url="https://svs.gsfc.nasa.gov/vis/a010000/a014600/a014623/EclipseSafety_VivekMurthy_H264.mp4"),
-    dict(id="dvids_marceaux", start=4, dur=20, credit="DVIDS (public domain)",
+    dict(id="dvids_marceaux", start=6, dur=10, credit="DVIDS (public domain)",
          url="https://upload.wikimedia.org/wikipedia/commons/9/98/Faces_of_Keen_Sword_-_Tech_Sgt_Sasha_Marceaux_%281027106%29.webm"),
-    dict(id="dvids_goto", start=10, dur=20, credit="DVIDS (public domain)",
+    dict(id="dvids_goto", start=1, dur=19, credit="DVIDS (public domain)",
          url="https://upload.wikimedia.org/wikipedia/commons/f/fb/Balikatan_25-_Humanitarian_Assistance_Disaster_Response_exercise_interview_%28960624%29.webm"),
-    dict(id="cdc_benjamin", start=10, dur=20, credit="CDC (public domain)",
-         url="https://upload.wikimedia.org/wikipedia/commons/f/f5/When_Smoking_Affects_Your_Family%2C_It%E2%80%99s_Personal_%E2%80%93_Former_SG_Regina_Benjamin.webm"),
+    dict(id="nasa_ott", start=3, dur=12, credit="NASA Goddard SVS 12047 (public domain)",
+         url="https://svs.gsfc.nasa.gov/vis/a010000/a012000/a012047/Lesley_Ott_interview_prores.mov"),
 ]
 LEVELS = {1: 0.08, 2: 0.12, 3: 0.16}  # disk radius as a fraction of inter-ocular distance
 
@@ -51,15 +52,21 @@ def sha256(path: str) -> str:
     return h.hexdigest()
 
 
-UA = "LucidFaceBenchmark/0.1 (open-source face-restoration benchmark; python-urllib)"
+UA = "LucidFaceBenchmark/0.1 (open-source face-restoration benchmark)"
 
 
 def _fetch(url: str, dst: str, log=print, tries: int = 6):
-    """Download with a descriptive user agent and exponential backoff (Wikimedia rate-limits
-    generic clients with HTTP 429)."""
+    """Download with a descriptive user agent. Uses curl when present: Wikimedia rate-limits
+    Python's built-in HTTP client with HTTP 429 even when curl with the same user agent is served."""
+    import shutil
     import time
     import urllib.error
     tmp = dst + ".part"
+    if shutil.which("curl"):
+        subprocess.run(["curl", "-fsSL", "--retry", str(tries), "--retry-delay", "15", "-A", UA,
+                        "-o", tmp, url], check=True)
+        os.replace(tmp, dst)
+        return
     for k in range(tries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": UA})
