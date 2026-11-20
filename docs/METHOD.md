@@ -19,8 +19,15 @@ and lips.
 
 *What LucidFace does:* face-prior restoration for the face, and, optionally, a model trained on real
 lens defocus (Restormer, DPDD) for hair, hands and clothes. Pass 1 gives every frame a
-scale-independent **focus score** (high- to mid-frequency energy on a 256 px aligned face), so shots
-that are already sharp can be left untouched (`--gate`).
+scale-independent **focus score** (high- to mid-frequency energy on a 256 px aligned face), and by
+default only out-of-focus shots are restored (`--gate auto`), because face priors degrade faces that
+are already sharp.
+
+*Calibration (benchmark):* sharp faces score 0.32 to 0.60; defocused faces score 0.15 to 0.24 at
+every blur level, and our real defocused footage scored 0.18 to 0.20. The default threshold is 0.28.
+Note that the score is not a sharpness meter inside the blurry range: on a blurred, noisy face the
+"fine detail" is mostly sensor noise, so the score rises slightly with heavier blur. It separates sharp
+from blurry; it does not measure how blurry.
 
 ## Rule 2: the camera is the ground truth for everything it can see (the consistency lock)
 
@@ -42,13 +49,31 @@ lid edges, iris texture) is kept. This is one step of classic back-projection (I
 the same idea as data-consistency steps in modern restoration (e.g. DDNM, DPS), applied as a
 model-agnostic post-step.
 
-*Measured:* on two eye test clips, eye fidelity error (re-blurred output vs observation, Lab) went from
-2.26 to 1.81, and iris colour error from 4.98 to 3.62 (dE). The same lock is applied to the body
-deblur.
+*Measured on real footage:* on the defocused interview that motivated LucidFace, the lock fixed the
+visible failures (grey iris, gaze pointed at the camera). On two 6-second test clips the eye fidelity
+error (re-blurred output vs observation, Lab) went from 2.26 to 1.81, and iris colour error from 4.98
+to 3.62 (dE).
 
-*Choosing the model setting:* with the lock in place, use the most faithful setting of the face prior
-(CodeFormer `w = 1.0`). The common default `w = 0.7` invents more and departs further from the
-observation (fidelity error 2.88 vs 2.26 before the lock).
+*Measured on the synthetic benchmark (honest result):* the lock does **not** improve the averaged
+face scores there. With a fixed cutoff it is neutral on mild blur and costs a little identity
+similarity on medium and heavy blur (0.819 to 0.811, 0.605 to 0.590). The cause is the cutoff: a lens
+blur of radius r keeps detail only up to a frequency proportional to 1/r, and a gaussian with
+sigma = 0.53 r matches it at the 50% point. A fixed cutoff is right for one blur level (it was tuned on
+footage at about the medium level) and too tight for heavier blur, where it pins some of the blur back
+in. Matching the cutoff to the true radius recovers most of it (heavy: 0.590 to 0.599) and makes the
+lock a small win on mild blur (identity 0.925 to 0.929), but on medium and heavy blur no lock is still
+marginally ahead (by 0.006 to 0.008).
+
+*Why it stays on by default:* the failure it prevents (moved gaze, recoloured eyes) is rare in
+averaged scores and glaring to a viewer, and synthetic blur on clean footage did not trigger it the
+way real camera defocus did. We trade a little average identity similarity for a guarantee that the
+result never contradicts what was filmed. Use `--lock 0` to turn it off. Estimating the blur radius
+per shot, so the cutoff always matches, is the first item on the roadmap.
+
+*Choosing the model setting:* use the most faithful setting of the face prior (CodeFormer `w = 1.0`).
+On the benchmark it beats the common default `w = 0.7` on identity similarity in 11 of 15
+clip-and-level cases (mild: 0.925 vs 0.905, medium: 0.819 vs 0.805), with equal or better
+perceptual distance.
 
 ## Rule 3: judge eyes by eyes
 
@@ -77,6 +102,13 @@ Per-frame restoration shimmers. Two sources, two fixes:
    (`conf = exp(-|warp(a_t-1) - a_t| / tau)`). Blinks and fast mouth movement get confidence near
    zero, so they are never ghosted. Only the detail layer is blended: low frequencies stay locked to
    the observation, so motion is never lagged.
+
+*Measured:* `--steady 0.25` lowered the eye flicker error against ground truth on all 15
+clip-and-level cases (mild: 8.12 to 7.59, heavy: 9.51 to 8.83) and slightly raised eye PSNR.
+`--steady 0.5` lowers it further (7.18) and still scores well on the benchmark, but on real footage
+with fast head turns it visibly softened the face, because optical flow on blurry faces is not precise
+enough there. The default is 0.25. Even so, every restoration flickers more than the blurry input does
+(6.1 to 6.6): restored detail is not perfectly stable. That is the second roadmap item.
 
 ## Rule 5: a person signs off, and the tool makes that fast
 

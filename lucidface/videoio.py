@@ -20,6 +20,7 @@ class VideoInfo:
     pix_fmt: str
     timecode: str | None
     has_audio: bool
+    matrix: str = "bt709"  # YUV<->RGB matrix of the source (bt709 for HD unless tagged otherwise)
 
     @property
     def fps_str(self) -> str:
@@ -38,10 +39,19 @@ def probe(path: str) -> VideoInfo:
         frames = int(subprocess.check_output([
             "ffprobe", "-v", "error", "-select_streams", "v:0", "-count_packets",
             "-show_entries", "stream=nb_read_packets", "-of", "csv=p=0", path]).strip())
+    cs = v.get("color_space", "unknown")
+    if cs in ("bt470bg", "smpte170m"):
+        matrix = "bt601"
+    elif cs in ("bt2020nc", "bt2020c"):
+        matrix = "bt2020"
+    elif cs == "bt709" or int(v["height"]) >= 720:
+        matrix = "bt709"  # untagged HD: assume BT.709 like players do
+    else:
+        matrix = "bt601"
     return VideoInfo(
         width=int(v["width"]), height=int(v["height"]), fps=Fraction(v["r_frame_rate"]),
         frames=frames, pix_fmt=v.get("pix_fmt", ""), timecode=tc,
-        has_audio=any(s["codec_type"] == "audio" for s in out["streams"]))
+        has_audio=any(s["codec_type"] == "audio" for s in out["streams"]), matrix=matrix)
 
 
 class Reader:
@@ -62,6 +72,8 @@ class Reader:
         if start_frame:
             vf.insert(0, f"select=gte(n\\,{start_frame})")
         self.w, self.h = w, h
+        # explicit YUV->RGB matrix: ffmpeg otherwise falls back to BT.601 for untagged files
+        vf.append(f"scale=in_color_matrix={info.matrix}:in_range=auto:flags=accurate_rnd+full_chroma_int+full_chroma_inp,format=bgr24")
         cmd = ["ffmpeg", "-v", "error", "-i", path]
         if vf:
             cmd += ["-vf", ",".join(vf)]
@@ -104,9 +116,13 @@ class Writer:
                  pix_fmt: str = "yuv420p", preset: str = "medium"):
         self.proc = subprocess.Popen([
             "ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{w}x{h}",
-            "-r", fps, "-i", "-", "-c:v", "libx264", "-preset", preset, "-crf", str(crf),
+            "-r", fps, "-i", "-",
+            # RGB->YUV with the BT.709 matrix, matching the tags below. Without this ffmpeg uses
+            # BT.601 while the file says BT.709, and every player shows shifted colours.
+            "-vf", f"scale=out_color_matrix=bt709:out_range=tv:flags=accurate_rnd+full_chroma_int,format={pix_fmt}",
+            "-c:v", "libx264", "-preset", preset, "-crf", str(crf),
             "-pix_fmt", pix_fmt, "-color_primaries", "bt709", "-color_trc", "bt709",
-            "-colorspace", "bt709", path], stdin=subprocess.PIPE)
+            "-colorspace", "bt709", "-color_range", "tv", path], stdin=subprocess.PIPE)
 
     def write(self, frame: np.ndarray):
         self.proc.stdin.write(np.ascontiguousarray(frame, dtype=np.uint8).tobytes())
