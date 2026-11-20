@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import torch
 
@@ -77,3 +78,26 @@ def test_focus_gate_calibrated_range():
     f = np.r_[np.full(50, 0.236), np.full(50, 0.33), np.full(50, 0.16)]
     g = qc.focus_gate(f, fps=25, thr=0.28)
     assert g[:45].all() and not g[55:95].any() and g[105:].all()
+
+
+def test_video_roundtrip_has_no_colour_bias(tmp_path):
+    """Regression: writing RGB without an explicit matrix used BT.601 while tagging BT.709, shifting
+    skin hues by about 3 levels. A write/read round trip must be unbiased."""
+    import shutil
+    import pytest
+    if not shutil.which("ffmpeg"):
+        pytest.skip("ffmpeg not installed")
+    from lucidface.videoio import Reader, Writer
+    rng = np.random.default_rng(0)
+    H, W = 720, 1280
+    base = np.array([120, 150, 200], np.float32)  # skin-like BGR
+    frames = [np.clip(base + rng.normal(0, 25, (H, W, 3)), 0, 255).astype(np.uint8) for _ in range(5)]
+    frames = [cv2.GaussianBlur(f, (0, 0), 3) for f in frames]
+    p = str(tmp_path / "rt.mp4")
+    w = Writer(p, W, H, "25", crf=0)
+    for f in frames:
+        w.write(f)
+    w.close()
+    back = np.stack(list(Reader(p))).astype(np.float32)
+    bias = (back - np.stack(frames).astype(np.float32)).mean(axis=(0, 1, 2))
+    assert np.abs(bias).max() < 0.3, bias
