@@ -1,0 +1,7 @@
+__pycache__/
+*.egg-info/
+bench/
+*.npz
+*.mp4
+*.mov
+.pytest_cache/
