@@ -27,13 +27,13 @@ def _median(x: np.ndarray, w: int) -> np.ndarray:
     return np.median(np.lib.stride_tricks.sliding_window_view(pad, w), axis=1)
 
 
-def focus_gate(focus: np.ndarray, fps: float, thr: float, hyst: float = 0.05,
+def focus_gate(focus: np.ndarray, fps: float, thr: float, hyst: float = 0.02,
                min_len_s: float = 1.0) -> np.ndarray:
     """True where the face is blurry enough to restore. thr: focus score below which a face counts
     as out of focus (calibrated by `lucidface bench`; see docs/METHOD.md)."""
     f = _median(np.nan_to_num(focus, nan=np.inf), max(1, int(fps)))
     on = np.zeros(len(f), bool)
-    state = False
+    state = bool(len(f)) and f[0] < thr
     for i, v in enumerate(f):
         if state and v > thr + hyst:
             state = False

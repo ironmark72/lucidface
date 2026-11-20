@@ -57,11 +57,15 @@ def cmd_crop(a):
     print(json.dumps({"box": [x, y, w, h], "output": a.output}))
 
 
+GATE_AUTO = 0.28  # benchmark: sharp faces score 0.32-0.60, defocused (all levels, with noise) 0.15-0.24
+
+
 def _gate(a, tr):
     from . import qc
     if a.gate in (None, "off", "all"):
         return None
-    return qc.focus_gate(tr["focus"], float(tr["fps"]), float(a.gate))
+    thr = GATE_AUTO if a.gate == "auto" else float(a.gate)
+    return qc.focus_gate(tr["focus"], float(tr["fps"]), thr)
 
 
 def cmd_restore(a, tr=None):
@@ -142,6 +146,9 @@ def cmd_run(a):
     print(json.dumps({"output": a.output_final, "report": base + ".qc.html"}))
 
 
+LOCK_PER_RADIUS = 0.53  # gaussian sigma whose 50% MTF point matches a disk PSF of radius r
+
+
 def cmd_bench(a):
     from . import bench, track
     from .restore import restore
@@ -159,6 +166,9 @@ def cmd_bench(a):
         "cf1.0+lock+steady.25": dict(backend="codeformer", fidelity=1.0, lock=a.lock, steady=0.25),
         "cf1.0+lock+steady.5": dict(backend="codeformer", fidelity=1.0, lock=a.lock, steady=0.5),
         "gfpgan+lock+steady.25": dict(backend="gfpgan", fidelity=1.0, lock=a.lock, steady=0.25),
+        # lock cutoff matched to the true blur radius (sigma = 0.53 r): tests the matched-lock rule
+        "cf1.0+lockR": dict(backend="codeformer", fidelity=1.0, lock="oracle", steady=0),
+        "cf1.0+lockR+steady.25": dict(backend="codeformer", fidelity=1.0, lock="oracle", steady=0.25),
     }
     if a.only:
         configs = {k: v for k, v in configs.items() if k in a.only.split(",")}
@@ -179,12 +189,14 @@ def cmd_bench(a):
                     out = blur
                 elif not os.path.exists(out):
                     be = backends.get(cfg["backend"], device, fidelity=cfg["fidelity"])
-                    restore(blur, tr, out, be, device=device, lock_rel=cfg["lock"], steady=cfg["steady"],
+                    lk = LOCK_PER_RADIUS * bench.LEVELS[lv] if cfg["lock"] == "oracle" else cfg["lock"]
+                    restore(blur, tr, out, be, device=device, lock_rel=lk, steady=cfg["steady"],
                             batch=a.batch, log=lambda *_: None)
                 fps = gt_tr["frames"] / (time.time() - t0) if cfg is not None else float("nan")
                 m = scorer.clip(c["gt"], out, gt_tr["landmarks"])
                 rows.append(dict(clip=c["id"], level=lv, config=name, iod=round(iod, 1),
-                                 radius_px=round(bench.LEVELS[lv] * iod, 2), fps=fps, **m))
+                                 radius_px=round(bench.LEVELS[lv] * iod, 2),
+                                 focus=round(float(np.nanmedian(tr["focus"])), 4), fps=fps, **m))
                 print(json.dumps(rows[-1]))
                 bench.write_table(rows, os.path.join(a.dir, "results.csv"), os.path.join(a.dir, "results.md"))
 
@@ -204,8 +216,8 @@ def main(argv=None):
         sp.add_argument("--lock", type=float, default=0.066,
                         help="consistency-lock cutoff as a fraction of inter-ocular distance (0 = off)")
         sp.add_argument("--steady", type=float, default=0.25, help="temporal blend strength 0-1 (0 = off)")
-        sp.add_argument("--gate", default=None, help="focus threshold: restore only frames blurrier than "
-                        "this (default: restore every frame)")
+        sp.add_argument("--gate", default="auto", help="restore only out-of-focus shots: 'auto' "
+                        f"(focus score < {GATE_AUTO}), a number, or 'off' to restore every frame")
         sp.add_argument("--reference", nargs="+", default=None, help="sharp photo(s) of the person")
         sp.add_argument("--body", action="store_true", help="also deblur hair/hands/clothes (slow)")
         sp.add_argument("--batch", type=int, default=8)

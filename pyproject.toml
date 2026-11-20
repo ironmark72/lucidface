@@ -21,6 +21,7 @@ dependencies = [
 identity = ["facenet-pytorch"]   # install with --no-deps; it pins an old torch
 bench = ["lpips>=0.1.4"]
 gfpgan = ["gfpgan>=1.3.8"]
+body = ["einops"]
 dev = ["pytest"]
 
 [project.scripts]

@@ -70,3 +70,10 @@ def test_fallback_weights_ramp():
     w = qc.weights(q, fl, fps=25)
     assert w[50] == 0 and w[0] == 1 and w[99] == 1
     assert 0 < w[42] < 1 or 0 < w[43] < 1  # gradual, not a hard switch
+
+
+def test_focus_gate_calibrated_range():
+    # benchmark: defocused faces 0.15-0.24, sharp faces 0.32-0.60
+    f = np.r_[np.full(50, 0.236), np.full(50, 0.33), np.full(50, 0.16)]
+    g = qc.focus_gate(f, fps=25, thr=0.28)
+    assert g[:45].all() and not g[55:95].any() and g[105:].all()

@@ -10,7 +10,7 @@ set -e
 M=${1:-/root/models}
 export PIP_BREAK_SYSTEM_PACKAGES=1
 mkdir -p "$M"
-pip install -q -e ".[bench,dev]"
+pip install -q -e ".[bench,dev,body]"
 pip install -q --no-deps facenet-pytorch
 
 if [ ! -d "$M/CodeFormer" ]; then
