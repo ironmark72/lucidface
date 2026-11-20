@@ -109,7 +109,7 @@ def _to_np(x):
 
 
 def restore(video: str, tracks: dict, out_path: str, backend, device: str = "cuda",
-            lock_rel: float = 0.066, steady: float = 0.5, batch: int = 8, gate: np.ndarray | None = None,
+            lock_rel: float = 0.066, steady: float = 0.25, batch: int = 8, gate: np.ndarray | None = None,
             body=None, idlock=None, crf: int = 10, log=print) -> dict:
     """lock_rel: consistency-lock cutoff as a fraction of the template inter-ocular distance
     (0 disables). steady: temporal blend strength 0..1 (0 disables). gate: bool per frame,

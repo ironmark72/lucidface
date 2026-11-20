@@ -51,6 +51,31 @@ def sha256(path: str) -> str:
     return h.hexdigest()
 
 
+UA = "LucidFaceBenchmark/0.1 (open-source face-restoration benchmark; python-urllib)"
+
+
+def _fetch(url: str, dst: str, log=print, tries: int = 6):
+    """Download with a descriptive user agent and exponential backoff (Wikimedia rate-limits
+    generic clients with HTTP 429)."""
+    import time
+    import urllib.error
+    tmp = dst + ".part"
+    for k in range(tries):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": UA})
+            with urllib.request.urlopen(req, timeout=60) as r, open(tmp, "wb") as f:
+                while chunk := r.read(1 << 20):
+                    f.write(chunk)
+            os.replace(tmp, dst)
+            return
+        except urllib.error.HTTPError as e:
+            if e.code not in (429, 500, 502, 503, 504) or k == tries - 1:
+                raise
+            wait = int(e.headers.get("Retry-After") or 0) or 10 * 2 ** k
+            log(f"bench: HTTP {e.code}, retrying in {wait}s")
+            time.sleep(wait)
+
+
 def download(root: str, log=print) -> list[dict]:
     """Fetch every clip, record its SHA-256, cut the benchmark segment to a lossless-ish mp4."""
     os.makedirs(os.path.join(root, "src"), exist_ok=True)
@@ -60,10 +85,7 @@ def download(root: str, log=print) -> list[dict]:
         src = os.path.join(root, "src", c["id"] + ext)
         if not os.path.exists(src):
             log(f"bench: downloading {c['id']}")
-            req = urllib.request.Request(c["url"], headers={"User-Agent": "lucidface-bench/0.1"})
-            with urllib.request.urlopen(req) as r, open(src, "wb") as f:
-                while chunk := r.read(1 << 20):
-                    f.write(chunk)
+            _fetch(c["url"], src, log)
         gt = os.path.join(root, f"{c['id']}_gt.mp4")
         if not os.path.exists(gt):
             subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(c["start"]), "-i", src, "-t", str(c["dur"]),

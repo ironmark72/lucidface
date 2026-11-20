@@ -156,8 +156,9 @@ def cmd_bench(a):
         "cf0.7": dict(backend="codeformer", fidelity=0.7, lock=0, steady=0),
         "cf1.0": dict(backend="codeformer", fidelity=1.0, lock=0, steady=0),
         "cf1.0+lock": dict(backend="codeformer", fidelity=1.0, lock=a.lock, steady=0),
-        "cf1.0+lock+steady": dict(backend="codeformer", fidelity=1.0, lock=a.lock, steady=a.steady),
-        "gfpgan+lock+steady": dict(backend="gfpgan", fidelity=1.0, lock=a.lock, steady=a.steady),
+        "cf1.0+lock+steady.25": dict(backend="codeformer", fidelity=1.0, lock=a.lock, steady=0.25),
+        "cf1.0+lock+steady.5": dict(backend="codeformer", fidelity=1.0, lock=a.lock, steady=0.5),
+        "gfpgan+lock+steady.25": dict(backend="gfpgan", fidelity=1.0, lock=a.lock, steady=0.25),
     }
     if a.only:
         configs = {k: v for k, v in configs.items() if k in a.only.split(",")}
@@ -202,7 +203,7 @@ def main(argv=None):
         sp.add_argument("--weights", default=None, help="weights file for backends that take one")
         sp.add_argument("--lock", type=float, default=0.066,
                         help="consistency-lock cutoff as a fraction of inter-ocular distance (0 = off)")
-        sp.add_argument("--steady", type=float, default=0.5, help="temporal blend strength 0-1 (0 = off)")
+        sp.add_argument("--steady", type=float, default=0.25, help="temporal blend strength 0-1 (0 = off)")
         sp.add_argument("--gate", default=None, help="focus threshold: restore only frames blurrier than "
                         "this (default: restore every frame)")
         sp.add_argument("--reference", nargs="+", default=None, help="sharp photo(s) of the person")
@@ -237,7 +238,7 @@ def main(argv=None):
     s = sub.add_parser("bench"); s.add_argument("action", choices=["download", "run"])
     s.add_argument("--dir", default="bench"); s.add_argument("--levels", default="1,2,3")
     s.add_argument("--clips", type=int, default=5); s.add_argument("--only")
-    s.add_argument("--lock", type=float, default=0.066); s.add_argument("--steady", type=float, default=0.5)
+    s.add_argument("--lock", type=float, default=0.066); s.add_argument("--steady", type=float, default=0.25)
     s.add_argument("--batch", type=int, default=8); common(s); s.set_defaults(fn=cmd_bench)
 
     a = p.parse_args(argv)

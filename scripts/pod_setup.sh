@@ -18,6 +18,9 @@ if [ ! -d "$M/CodeFormer" ]; then
   R=https://github.com/sczhou/CodeFormer/releases/download/v0.1.0
   wget -q -O "$M/CodeFormer/weights/CodeFormer/codeformer.pth" $R/codeformer.pth
 fi
+# CodeFormer's own `setup.py develop` normally generates this file and often fails; write it directly
+[ -f "$M/CodeFormer/basicsr/version.py" ] || \
+  printf "__version__ = '1.3.2'\n__gitsha__ = 'unknown'\nversion_info = (1, 3, 2)\n" > "$M/CodeFormer/basicsr/version.py"
 if [ ! -d "$M/Restormer" ]; then
   git clone --depth 1 https://github.com/swz30/Restormer "$M/Restormer"
   wget -q -O "$M/Restormer/Defocus_Deblurring/pretrained_models/single_image_defocus_deblurring.pth"     https://github.com/swz30/Restormer/releases/download/v1.0/single_image_defocus_deblurring.pth

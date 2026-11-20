@@ -135,6 +135,15 @@ def smooth(raw: np.ndarray, sigma_frames: float = 2.0, max_gap: int = 6,
                 flush(seg_start, i); seg_start = i
     if seg_start is not None:
         flush(seg_start, n)
+    # adaptive: smoothing removes jitter when the head is still, but lags behind fast turns. Where the
+    # smoothed track drifts from the measurement by more than a few % of the eye distance, follow the
+    # measurement instead (soft blend between 4% and 12%).
+    ok = ~np.isnan(out[:, 0, 0]) & ~np.isnan(raw[:, 0, 0])
+    if ok.any():
+        iod = np.linalg.norm(out[ok, 1] - out[ok, 0], axis=1)
+        dev = np.linalg.norm(raw[ok] - out[ok], axis=2).max(1) / np.maximum(iod, 1)
+        t = np.clip((dev - 0.04) / 0.08, 0, 1)[:, None, None]
+        out[ok] = out[ok] * (1 - t) + raw[ok] * t
     return out.astype(np.float32), np.array(cuts, np.int64)
 
 

@@ -5,3 +5,4 @@ bench/
 *.mp4
 *.mov
 .pytest_cache/
+_local/

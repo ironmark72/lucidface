@@ -54,7 +54,7 @@ def focus_gate(focus: np.ndarray, fps: float, thr: float, hyst: float = 0.05,
 
 
 def flags(qc: dict, tracks: dict, depart_thr: float = 7.0, shimmer_ratio: float = 3.0,
-          id_thr: float = 0.45, track_rel: float = 0.15) -> dict:
+          id_thr: float = 0.45, track_rel: float = 0.25) -> dict:
     n = len(qc["restored"])
     rest = qc["restored"]
     lm, raw = tracks["landmarks"][:n], tracks["raw"][:n]
