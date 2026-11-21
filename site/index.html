@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LucidFace: observation-locked face restoration</title>
+<meta name="description" content="LucidFace restores out-of-focus faces in interview video under one rule: the restoration may add only what the camera could not record.">
+<meta property="og:title" content="LucidFace">
+<meta property="og:description" content="Observation-locked restoration of out-of-focus faces in interview video. Method, open pipeline and a reproducible public-domain benchmark.">
+<meta property="og:image" content="assets/pipeline.svg">
+<style>
+:root{
+  --bg:#fcfcfb; --panel:#ffffff; --ink:#0b0b0b; --ink2:#52514e; --muted:#8a8984; --line:#e2e1dc;
+  --blue:#2a78d6; --orange:#eb6834; --aqua:#13966a; --code:#f3f2ef;
+  --radius:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#141413; --panel:#1c1c1b; --ink:#f0efec; --ink2:#c3c2b7; --muted:#8f8e88; --line:#2e2d2a;
+         --blue:#5a9cef; --orange:#ef7d4f; --aqua:#2cc48f; --code:#232321; }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif}
+a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+header{padding:64px 0 28px;text-align:center}
+h1{font-size:clamp(34px,6vw,52px);line-height:1.08;margin:0 0 14px;letter-spacing:-.02em}
+.sub{font-size:clamp(17px,2.4vw,21px);color:var(--ink2);max-width:720px;margin:0 auto 26px}
+.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:999px;font-weight:600;font-size:15px;border:1.5px solid var(--ink);color:var(--ink)}
+.btn.primary{background:var(--ink);color:var(--bg)}
+.btn:hover{text-decoration:none;opacity:.88}
+.btn svg{width:16px;height:16px}
+figure{margin:28px 0}
+figure .frame{border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:#fcfcfb}
+figure img{display:block;width:100%;height:auto}
+figcaption{color:var(--ink2);font-size:14px;margin-top:10px}
+section{padding:36px 0;border-top:1px solid var(--line)}
+h2{font-size:26px;margin:0 0 16px;letter-spacing:-.01em}
+h3{font-size:19px;margin:28px 0 8px}
+p{margin:0 0 14px}
+.lead{font-size:18px;color:var(--ink)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px}
+.card h3{margin-top:0}
+.card p:last-child{margin-bottom:0}
+.tag{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.k{color:var(--orange);font-weight:600} .b{color:var(--blue);font-weight:600} .g{color:var(--aqua);font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:20px 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+.stat b{display:block;font-size:30px;line-height:1.1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat span{color:var(--ink2);font-size:14px}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--ink2);font-weight:600;font-size:13px}
+tr:last-child td{border-bottom:0}
+td.best{font-weight:700}
+tr.sep td{border-bottom:2px solid var(--line)}
+.note{border-left:3px solid var(--orange);background:var(--panel);padding:14px 18px;border-radius:0 var(--radius) var(--radius) 0;color:var(--ink2);font-size:15px}
+.note b{color:var(--ink)}
+pre{background:var(--code);border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font:13.5px/1.6 Consolas,"SF Mono",Menlo,monospace;margin:0}
+.cite{position:relative}
+.copy{position:absolute;top:10px;right:10px;font:600 13px/1 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.copy[data-done]{color:var(--aqua);border-color:var(--aqua)}
+ul{padding-left:20px;margin:0 0 14px} li{margin:4px 0}
+footer{padding:36px 0 56px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+@media (max-width:720px){
+  header{padding:40px 0 20px}
+  figure .frame{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  figure img{min-width:680px}
+  .grid2,.stats{grid-template-columns:1fr}
+  section{padding:28px 0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>LucidFace</h1>
+  <p class="sub">Observation-locked restoration of out-of-focus faces in interview video. The restoration may add only what the camera could not record.</p>
+  <div class="btns">
+    <a class="btn primary" href="https://github.com/ironmark72/lucidface"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Code</a>
+    <a class="btn" href="https://github.com/ironmark72/lucidface/blob/main/paper/report.md">Technical report</a>
+    <a class="btn" href="https://github.com/ironmark72/lucidface/blob/main/docs/BENCHMARK.md">Benchmark</a>
+    <a class="btn" href="https://github.com/ironmark72/lucidface/blob/main/docs/METHOD.md">Method</a>
+  </div>
+</header>
+
+<figure>
+  <div class="frame"><a href="assets/pipeline.svg"><img src="assets/pipeline.svg" alt="LucidFace pipeline: input video, pass 1 tracking, focus gate, then on the GPU align, restore, consistency lock, temporal steadier and paste back, then QC with fallback and a composite onto the original file."></a></div>
+  <figcaption>Two passes over the video. Only the face box of the original file is ever replaced.</figcaption>
+</figure>
+
+<section>
+  <h2>Abstract</h2>
+  <p class="lead">A missed focus pull leaves the background sharp and the speaker soft for the whole take. Video upscalers barely help: the frame is not under-sampled, it is low-passed by the lens. Face models rebuild a convincing face, but they also rewrite what the camera <em>did</em> record, such as where the person is looking or the colour of their eyes.</p>
+  <p>LucidFace pins the restored face to the observed frame below a cutoff frequency (<span class="k">consistency lock</span>), blends only fine detail over time along trustworthy optical flow (<span class="b">temporal steadier</span>), leaves in-focus shots untouched (<span class="g">focus gate</span>), and flags and fades out doubtful frames. On a reproducible benchmark built from public-domain interviews it halves perceptual distance to the sharp original and raises identity similarity in 13 of 15 cases. We also report what did not work.</p>
+</section>
+
+<section>
+  <h2>The problem</h2>
+  <div class="grid2">
+    <div class="card">
+      <span class="tag">Tried first</span>
+      <h3>Upscalers do not fix defocus</h3>
+      <p>On a 27-minute defocused interview, a state-of-the-art video restorer (SeedVR2, 3B and 7B, input pre-shrunk 1x to 4x) only slightly crisped the eyes. Defocus removes high frequencies from a face that already has enough pixels.</p>
+    </div>
+    <div class="card">
+      <span class="tag">Then</span>
+      <h3>Face models invent, including the eyes</h3>
+      <p>A face prior (CodeFormer) rebuilt eyes, brows and lips. At its usual setting it also turned one brown iris grey and pointed that eye at the camera while the other looked away. Viewers notice eyes first.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Method</h2>
+
+  <h3><span class="k">1 · The consistency lock</span></h3>
+  <p>A defocused lens keeps the low frequencies of the face: iris position and colour, gaze, shading. LucidFace keeps exactly those from the camera and takes only the high band from the model: <code>r′ = r + G<sub>s</sub> * (a − r)</code>, with the cutoff tied to the eye distance. It is closed-form and works with any face model.</p>
+  <figure><div class="frame"><a href="assets/lock_frequency.png"><img src="assets/lock_frequency.png" alt="Chart: below the lock cutoff each frequency comes from the camera, above it from the restoration model; the defocused lens response is drawn for comparison."></a></div></figure>
+
+  <h3><span class="b">2 · The temporal steadier</span></h3>
+  <p>Per-frame restoration shimmers. Restored detail is blended with the previous frame's, moved along optical flow, and only where the flow is trustworthy, so blinks and speech are never ghosted. Low frequencies stay locked to the current frame, so motion never lags.</p>
+  <figure><div class="frame"><a href="assets/steadier.svg"><img src="assets/steadier.svg" alt="Diagram of the temporal steadier: optical flow between blurry frames gives a confidence map, and the previous frame's detail is warped and blended in where confidence is high."></a></div></figure>
+
+  <h3><span class="g">3 · The focus gate</span></h3>
+  <p>Face models degrade faces that are already sharp. A scale-free focus score separates sharp from defocused faces with a clear gap; only shots below the threshold are restored.</p>
+  <figure><div class="frame"><a href="assets/focus_gate.png"><img src="assets/focus_gate.png" alt="Dot plot: sharp faces score 0.32 to 0.60, defocused faces 0.15 to 0.24, with the gate threshold at 0.28."></a></div></figure>
+
+  <h3>4 · Quality control with graceful fallback</h3>
+  <p>Frames where the model departed from the footage, eyes shimmer, identity drifts or tracking is unreliable are flagged, faded back to the original, and listed with timestamps in an HTML report.</p>
+  <figure><div class="frame"><a href="assets/qc_fallback.png"><img src="assets/qc_fallback.png" alt="Timeline: around flagged frames the blend weight ramps smoothly from restored to original and back."></a></div></figure>
+
+  <h3>5 · Built for real files</h3>
+  <p>Only the face box travels to the GPU and back, and it is composited onto the untouched original at the same bit depth, with the original audio and timecode.</p>
+  <figure><div class="frame"><a href="assets/crop_workflow.svg"><img src="assets/crop_workflow.svg" alt="Diagram: a face box inside a 1920 by 1080 frame is cropped, restored on a GPU and composited back; the upload drops from 10.6 GB to 815 MB."></a></div></figure>
+</section>
+
+<section>
+  <h2>Results</h2>
+  <p>Five public-domain interviews (US government works), synthetic lens blur at three strengths, scored against the sharp originals in the face and eye regions.</p>
+  <div class="stats">
+    <div class="stat"><b>15 / 15</b><span>cases with lower perceptual distance than the blurry input</span></div>
+    <div class="stat"><b>13 / 15</b><span>cases with higher identity similarity</span></div>
+    <div class="stat"><b>~10 fps</b><span>at 1080p on an RTX 4080 SUPER, end to end</span></div>
+  </div>
+  <figure><div class="frame"><a href="assets/results.png"><img src="assets/results.png" alt="Three line charts by blur strength: perceptual distance, identity similarity and eye flicker for the blurry input, CodeFormer at its usual setting, and LucidFace."></a></div></figure>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>blur</th><th>method</th><th>LPIPS ↓</th><th>identity ↑</th><th>eye flicker ↓</th></tr></thead>
+      <tbody>
+        <tr><td>mild</td><td>blurry input</td><td>0.222</td><td>0.899</td><td class="best">6.10</td></tr>
+        <tr class="sep"><td>mild</td><td>LucidFace</td><td class="best">0.096</td><td class="best">0.925</td><td>7.59</td></tr>
+        <tr><td>medium</td><td>blurry input</td><td>0.248</td><td>0.763</td><td class="best">6.41</td></tr>
+        <tr class="sep"><td>medium</td><td>LucidFace</td><td class="best">0.116</td><td class="best">0.813</td><td>8.58</td></tr>
+        <tr><td>heavy</td><td>blurry input</td><td>0.265</td><td>0.577</td><td class="best">6.59</td></tr>
+        <tr><td>heavy</td><td>LucidFace</td><td class="best">0.135</td><td class="best">0.591</td><td>8.82</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <h3>What did not work</h3>
+  <div class="note">
+    <p><b>The lock does not improve averaged scores on synthetic blur.</b> It was built for a failure seen on real camera defocus (rewritten gaze and iris colour) that synthetic blur on clean footage did not trigger. It stays on as a guarantee; <code>--lock 0</code> turns it off.</p>
+    <p><b>Restoration adds flicker.</b> Every restored version flickers more against the ground truth than the blurry input does. The steadier reduces it but does not close the gap.</p>
+    <p style="margin:0"><b>Colour bias in this run.</b> A colour-matrix bug, since fixed and tested, biased these comparisons against restoration, so the wins above are lower bounds. Full details in the <a href="https://github.com/ironmark72/lucidface/blob/main/docs/BENCHMARK.md">benchmark</a>.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Get started</h2>
+<pre>git clone https://github.com/ironmark72/lucidface && cd lucidface
+bash scripts/pod_setup.sh ~/models
+export LUCIDFACE_CODEFORMER_DIR=~/models/CodeFormer
+lucidface run interview.mp4 -o interview_fixed.mov</pre>
+  <p style="margin-top:14px">You get the restored video and an HTML QC report. Requires a CUDA GPU with 16 GB or more. The code is MIT; the default face model (CodeFormer) is <b>non-commercial</b>, see <a href="https://github.com/ironmark72/lucidface/blob/main/NOTICE.md">NOTICE</a>. Restored faces are estimates, not evidence: do not use them for identification.</p>
+</section>
+
+<section>
+  <h2>Citation</h2>
+  <div class="cite">
+<pre id="bib">@software{lucidface2026,
+  title  = {LucidFace: Observation-Locked Restoration of Out-of-Focus Faces in Interview Video},
+  author = {{LucidFace contributors}},
+  year   = {2026},
+  url    = {https://github.com/ironmark72/lucidface}
+}</pre>
+    <button class="copy" type="button" id="copy">Copy</button>
+  </div>
+</section>
+
+<footer>
+  Built on CodeFormer, GFPGAN, facexlib, Restormer, RAFT, facenet-pytorch and LPIPS. Benchmark footage: US federal government works, public domain. Code under the MIT licence.
+</footer>
+
+</div>
+<script>
+(function(){
+  var b=document.getElementById('copy'), t=document.getElementById('bib');
+  b.addEventListener('click',function(){
+    var done=function(){b.textContent='Copied';b.setAttribute('data-done','');setTimeout(function(){b.textContent='Copy';b.removeAttribute('data-done');},1600);};
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t.textContent).then(done,function(){sel();});}else{sel();}
+    function sel(){var r=document.createRange();r.selectNodeContents(t);var s=window.getSelection();s.removeAllRanges();s.addRange(r);var ok=false;try{ok=document.execCommand('copy');}catch(e){}if(ok){done();}else{b.textContent='Selected';}}
+  });
+})();
+</script>
+</body>
+</html>

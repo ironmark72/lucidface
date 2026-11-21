@@ -6,3 +6,4 @@ bench/
 *.mov
 .pytest_cache/
 _local/
+.claude/

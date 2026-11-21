@@ -4,7 +4,7 @@
 
 **Observation-locked restoration of out-of-focus faces in interview video**
 
-[Technical report](paper/report.md) · [Method](docs/METHOD.md) · [Benchmark](docs/BENCHMARK.md) · [Roadmap](docs/ROADMAP.md)
+[Project page](https://ironmark72.github.io/lucidface/) · [Technical report](paper/report.md) · [Method](docs/METHOD.md) · [Benchmark](docs/BENCHMARK.md) · [Roadmap](docs/ROADMAP.md)
 
 ![license](https://img.shields.io/badge/code-MIT-2a78d6) ![python](https://img.shields.io/badge/python-3.10%2B-2a78d6) ![gpu](https://img.shields.io/badge/GPU-16%20GB%2B-2a78d6) ![weights](https://img.shields.io/badge/default%20weights-non--commercial-eb6834)
 
