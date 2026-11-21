@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a8984"/>
+    </marker>
+    <style>
+      .box{fill:#ffffff;stroke:#d6d5d0;stroke-width:1.5}
+      .t{font-size:15px;font-weight:600;fill:#0b0b0b}
+      .s{font-size:13px;fill:#52514e}
+      .m{font-size:14px;fill:#0b0b0b;font-family:Consolas,'SF Mono',Menlo,monospace}
+      .ln{stroke:#8a8984;stroke-width:1.6;fill:none}
+    </style>
+  </defs>
+  <rect x="1" y="1" width="1198" height="398" rx="16" fill="#fcfcfb" stroke="#e2e1dc"/>
+  <text x="32" y="44" font-size="20" font-weight="700" fill="#0b0b0b">Temporal steadier: blend detail, never structure</text>
+  <text x="32" y="68" class="s">Each frame's restored detail is blended with the previous frame's, moved along the optical flow, and only where that flow can be trusted.</text>
+
+  <!-- inputs -->
+  <rect class="box" x="32" y="100" width="230" height="64" rx="10"/>
+  <text x="48" y="126" class="t">blurry face, frame t−1</text>
+  <text x="48" y="148" class="m">a(t−1)</text>
+  <rect class="box" x="32" y="184" width="230" height="64" rx="10"/>
+  <text x="48" y="210" class="t">blurry face, frame t</text>
+  <text x="48" y="232" class="m">a(t)</text>
+  <rect class="box" x="32" y="300" width="230" height="64" rx="10"/>
+  <text x="48" y="326" class="t">restored detail, t−1</text>
+  <text x="48" y="348" class="m">d′(t−1)</text>
+
+  <!-- flow -->
+  <path class="ln" d="M262 132 H300 V170 H316" marker-end="url(#ar)"/>
+  <path class="ln" d="M262 216 H300 V194 H316" marker-end="url(#ar)"/>
+  <rect x="320" y="146" width="200" height="72" rx="10" fill="#eaf2fc" stroke="#2a78d6" stroke-width="1.5"/>
+  <text x="336" y="174" class="t">Optical flow (RAFT)</text>
+  <text x="336" y="196" class="s">on the aligned faces</text>
+
+  <!-- confidence -->
+  <path class="ln" d="M520 182 H556" marker-end="url(#ar)"/>
+  <rect class="box" x="560" y="120" width="300" height="124" rx="10"/>
+  <text x="576" y="148" class="t">Confidence map</text>
+  <text x="576" y="174" class="m">c = exp(−|warp a(t−1) − a(t)| / τ)</text>
+  <text x="576" y="200" class="s">≈ 1 where frames line up</text>
+  <text x="576" y="220" class="s">≈ 0 on blinks and fast mouth motion</text>
+
+  <!-- warp detail -->
+  <path class="ln" d="M262 332 H556" marker-end="url(#ar)"/>
+  <rect class="box" x="560" y="296" width="300" height="72" rx="10"/>
+  <text x="576" y="324" class="t">Warp previous detail</text>
+  <text x="576" y="348" class="m">warp d′(t−1) along the flow</text>
+  <path class="ln" d="M420 218 V282 H710 V292" marker-end="url(#ar)"/>
+
+  <!-- blend -->
+  <path class="ln" d="M860 182 H890 V230 H906" marker-end="url(#ar)"/>
+  <path class="ln" d="M860 332 H890 V270 H906" marker-end="url(#ar)"/>
+  <rect x="910" y="176" width="258" height="150" rx="10" fill="#0b0b0b"/>
+  <text x="928" y="206" font-size="15" font-weight="600" fill="#ffffff">Blend (α = 0.25)</text>
+  <text x="928" y="234" class="m" fill="#ffffff" style="fill:#ffffff">d′(t) = d(t) + α·c·</text>
+  <text x="928" y="256" class="m" style="fill:#ffffff">(warp d′(t−1) − d(t))</text>
+  <text x="928" y="286" font-size="13" fill="#d6d5d0">d = r′ − G_s(r′): detail layer</text>
+  <text x="928" y="306" font-size="13" fill="#d6d5d0">only, after the consistency lock</text>
+</svg>

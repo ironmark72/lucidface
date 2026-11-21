@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use LucidFace, please cite it as below."
+title: "LucidFace: Observation-Locked Restoration of Out-of-Focus Faces in Interview Video"
+type: software
+authors:
+  - name: "LucidFace contributors"
+version: 0.1.0
+date-released: 2026-11-21
+license: MIT
+repository-code: "https://github.com/ironmark72/lucidface"
+keywords:
+  - face restoration
+  - video restoration
+  - defocus deblurring
+  - consistency
+  - benchmark
+abstract: >-
+  LucidFace restores out-of-focus faces in interview video under one rule: the restoration may add
+  only what the camera could not record. A low-frequency consistency lock pins the restored face to
+  the observed frame, a detail-only temporal steadier blends along trustworthy optical flow, a focus
+  gate leaves in-focus shots untouched, and an eye-centred QC stage flags and fades out doubtful
+  frames. Includes a reproducible benchmark built from public-domain interviews.

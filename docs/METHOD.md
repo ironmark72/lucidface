@@ -1,5 +1,7 @@
 # The LucidFace method
 
+![LucidFace pipeline](../assets/pipeline.svg)
+
 LucidFace restores faces that are **out of focus** in interview and talking-head video: the camera
 focused on the wall, the subject is soft for the whole take. It is a method more than a model:
 the pieces are existing, credited components, put together around five rules we learned the hard way

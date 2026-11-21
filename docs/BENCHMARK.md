@@ -40,11 +40,15 @@ likeness to promote LucidFace or imply their endorsement.
 | dvids_goto | [DVIDS, Balikatan 25 interview](https://commons.wikimedia.org/wiki/File:Balikatan_25-_Humanitarian_Assistance_Disaster_Response_exercise_interview_(960624).webm) | 1-20 s | `a0f1b40baeee62ce6bf13b461501e4f504c3e05dad02e8c35ce3bcf30b60d9df` |
 | nasa_ott | [NASA Goddard SVS 12047](https://svs.gsfc.nasa.gov/12047) | 3-15 s | `fef8f2ffe7067b99ab1c77d60b9da21df524dacdbfd558c29b8e8406b6f4d7f3` |
 
+![Focus gate calibration](../assets/focus_gate.png)
+
 Windows were chosen by a 1 fps face scan as the stretch where exactly one large face is on screen the
 whole time (no B-roll or cutaways). The set covers three men and two women, several skin tones, a
 close-up, medium shots, glasses and a cap.
 
 ## Results
+
+![Benchmark results](../assets/results.png)
 
 Measured on an RTX 4080 SUPER, 2026-11-20. Means over the five clips; `identity` is facenet
 cosine similarity to the sharp ground truth.

@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 610" width="1200" height="610" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a8984"/>
+    </marker>
+    <style>
+      .box{fill:#ffffff;stroke:#d6d5d0;stroke-width:1.5}
+      .t{font-size:16px;font-weight:600;fill:#0b0b0b}
+      .s{font-size:13px;fill:#52514e}
+      .k{font-size:12px;fill:#8a8984;letter-spacing:.04em}
+      .ln{stroke:#8a8984;stroke-width:1.6;fill:none}
+    </style>
+  </defs>
+  <rect x="1" y="1" width="1198" height="608" rx="16" fill="#fcfcfb" stroke="#e2e1dc"/>
+  <text x="32" y="46" font-size="22" font-weight="700" fill="#0b0b0b">LucidFace pipeline</text>
+  <text x="32" y="72" class="s">Two passes over the video. Only the face box of the original file is ever replaced.</text>
+
+  <!-- row 1 -->
+  <rect class="box" x="32" y="96" width="200" height="104" rx="10"/>
+  <text x="48" y="124" class="t">Input video</text>
+  <text x="48" y="148" class="s">camera original</text>
+  <text x="48" y="168" class="s">any bit depth and chroma</text>
+
+  <path class="ln" d="M232 148 H268" marker-end="url(#ar)"/>
+  <rect class="box" x="272" y="96" width="300" height="104" rx="10"/>
+  <text x="288" y="124" class="t">Pass 1 · Track</text>
+  <text x="288" y="148" class="s">RetinaFace 5-point landmarks</text>
+  <text x="288" y="168" class="s">smoothed over time, cut-aware</text>
+  <text x="288" y="188" class="s">focus score for every frame</text>
+
+  <path class="ln" d="M572 148 H608" marker-end="url(#ar)"/>
+  <rect x="612" y="96" width="220" height="104" rx="10" fill="#e8f7f1" stroke="#1baf7a" stroke-width="1.5"/>
+  <text x="628" y="124" class="t">Focus gate</text>
+  <text x="628" y="148" class="s">sharp shots stay untouched</text>
+  <text x="628" y="168" class="s">default threshold 0.28</text>
+
+  <rect x="872" y="96" width="296" height="104" rx="10" fill="#ffffff" stroke="#b9b8b2" stroke-width="1.5" stroke-dasharray="6 5"/>
+  <text x="888" y="124" class="t">Optional · --body</text>
+  <text x="888" y="148" class="s">lens-defocus model (Restormer)</text>
+  <text x="888" y="168" class="s">for hair, hands and clothes</text>
+  <text x="888" y="188" class="s">under the same consistency lock</text>
+  <path d="M1020 200 V236" stroke="#b9b8b2" stroke-width="1.6" stroke-dasharray="5 4" fill="none" marker-end="url(#ar)"/>
+
+  <!-- row 2: pass 2 container -->
+  <rect x="32" y="240" width="1136" height="172" rx="14" fill="#f3f2ef" stroke="#e2e1dc"/>
+  <text x="180" y="266" class="k">PASS 2 · RESTORE  ·  on the GPU, in batches</text>
+  <path class="ln" d="M722 200 V220 H156 V282" marker-end="url(#ar)"/>
+
+  <rect class="box" x="56" y="286" width="200" height="100" rx="10"/>
+  <text x="72" y="314" class="t">Align</text>
+  <text x="72" y="338" class="s">warp to the 512 template</text>
+  <text x="72" y="358" class="s">from smoothed landmarks</text>
+  <path class="ln" d="M256 336 H276" marker-end="url(#ar)"/>
+
+  <rect class="box" x="280" y="286" width="200" height="100" rx="10"/>
+  <text x="296" y="314" class="t">Restore</text>
+  <text x="296" y="338" class="s">CodeFormer, w = 1.0</text>
+  <text x="296" y="358" class="s">+ optional identity lock</text>
+  <path class="ln" d="M480 336 H500" marker-end="url(#ar)"/>
+
+  <rect x="504" y="286" width="200" height="100" rx="10" fill="#fdf0ea" stroke="#eb6834" stroke-width="2"/>
+  <text x="520" y="314" class="t">Consistency lock</text>
+  <text x="520" y="338" class="s">below cutoff: the camera</text>
+  <text x="520" y="358" class="s">above cutoff: the model</text>
+  <path class="ln" d="M704 336 H724" marker-end="url(#ar)"/>
+
+  <rect x="728" y="286" width="200" height="100" rx="10" fill="#eaf2fc" stroke="#2a78d6" stroke-width="1.5"/>
+  <text x="744" y="314" class="t">Temporal steadier</text>
+  <text x="744" y="338" class="s">flow-compensated blend</text>
+  <text x="744" y="358" class="s">of detail only, α = 0.25</text>
+  <path class="ln" d="M928 336 H948" marker-end="url(#ar)"/>
+
+  <rect class="box" x="952" y="286" width="200" height="100" rx="10"/>
+  <text x="968" y="314" class="t">Paste back</text>
+  <text x="968" y="338" class="s">face-parsing mask</text>
+  <text x="968" y="358" class="s">feathered edge</text>
+
+  <!-- row 3 -->
+  <path class="ln" d="M1052 386 V432 H197 V452" marker-end="url(#ar)"/>
+  <rect class="box" x="32" y="456" width="330" height="112" rx="10"/>
+  <text x="48" y="484" class="t">QC · flags and fallback</text>
+  <text x="48" y="508" class="s">model departure, eye shimmer,</text>
+  <text x="48" y="528" class="s">identity drift, unreliable tracking</text>
+  <text x="48" y="548" class="s">flagged frames fade back to the original</text>
+
+  <path class="ln" d="M362 512 H398" marker-end="url(#ar)"/>
+  <rect class="box" x="402" y="456" width="330" height="112" rx="10"/>
+  <text x="418" y="484" class="t">Composite onto the original</text>
+  <text x="418" y="508" class="s">only the face box changes</text>
+  <text x="418" y="528" class="s">same bit depth and chroma</text>
+  <text x="418" y="548" class="s">original audio and timecode</text>
+
+  <path class="ln" d="M732 512 H752 V484 H768" marker-end="url(#ar)"/>
+  <path class="ln" d="M752 512 V540 H768" marker-end="url(#ar)"/>
+  <rect x="772" y="462" width="396" height="44" rx="22" fill="#0b0b0b"/>
+  <text x="792" y="489" font-size="14" font-weight="600" fill="#ffffff">Restored video</text>
+  <rect x="772" y="518" width="396" height="44" rx="22" fill="#ffffff" stroke="#0b0b0b" stroke-width="1.5"/>
+  <text x="792" y="545" font-size="14" font-weight="600" fill="#0b0b0b">QC report (HTML, with timestamps)</text>
+
+  <text x="32" y="594" class="k">ORANGE = the consistency lock (method rule 2) · BLUE = temporal steadying (rule 4) · GREEN = focus gate (rule 1)</text>
+</svg>

@@ -1,0 +1,23 @@
+clip,condition,focus
+potus2015,sharp original,0.4325
+nasa_murthy,sharp original,0.6016
+dvids_marceaux,sharp original,0.4018
+dvids_goto,sharp original,0.3204
+nasa_ott,sharp original,0.5115
+potus2015,synthetic defocus L1,0.1718
+potus2015,synthetic defocus L2,0.1904
+potus2015,synthetic defocus L3,0.2277
+nasa_murthy,synthetic defocus L1,0.1573
+nasa_murthy,synthetic defocus L2,0.1682
+nasa_murthy,synthetic defocus L3,0.1986
+dvids_marceaux,synthetic defocus L1,0.1674
+dvids_marceaux,synthetic defocus L2,0.1691
+dvids_marceaux,synthetic defocus L3,0.194
+dvids_goto,synthetic defocus L1,0.1663
+dvids_goto,synthetic defocus L2,0.191
+dvids_goto,synthetic defocus L3,0.2364
+nasa_ott,synthetic defocus L1,0.1487
+nasa_ott,synthetic defocus L2,0.1626
+nasa_ott,synthetic defocus L3,0.1977
+real_interview_a,real defocused interview,0.197
+real_interview_b,real defocused interview,0.18
