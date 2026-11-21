@@ -68,7 +68,9 @@ for c in clips:
     except ValueError as e:  # no face in the chosen reference frame
         rows.append(dict(clip=c["id"], feature="reference", error=str(e)))
     print(json.dumps(rows[-1]), flush=True)
-    # body deblur
+    # body deblur: slow (about 1 fps), so measured on the medium shot only by default
+    if c["id"] not in os.environ.get("BODY_CLIPS", "dvids_marceaux").split(","):
+        continue
     out = os.path.join(root, f"{c['id']}_L2_body.mp4")
     t0 = time.time()
     body = BodyDeblur(Restormer(dev), tr)

@@ -69,7 +69,7 @@ On a 27-minute 10-bit interview the upload went from 10.6 GB to 815 MB.
 ## Requirements
 
 A CUDA GPU with 16 GB or more, Python 3.10+, PyTorch 2.1+, and ffmpeg. Measured on an RTX 4080 SUPER:
-about 9 fps for 1080p with CodeFormer, everything included.
+about 10 fps for 1080p with CodeFormer and the default settings (12 fps without steadying), everything included. Results: [docs/BENCHMARK.md](docs/BENCHMARK.md).
 
 ## Licences: read before commercial use
 

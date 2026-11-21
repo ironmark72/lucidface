@@ -104,7 +104,7 @@ Per-frame restoration shimmers. Two sources, two fixes:
    the observation, so motion is never lagged.
 
 *Measured:* `--steady 0.25` lowered the eye flicker error against ground truth on all 15
-clip-and-level cases (mild: 8.12 to 7.59, heavy: 9.51 to 8.83) and slightly raised eye PSNR.
+clip-and-level cases (mild: 8.12 to 7.59, heavy: 9.51 to 8.82) and slightly raised eye PSNR.
 `--steady 0.5` lowers it further (7.18) and still scores well on the benchmark, but on real footage
 with fast head turns it visibly softened the face, because optical flow on blurry faces is not precise
 enough there. The default is 0.25. Even so, every restoration flickers more than the blurry input does
@@ -131,6 +131,13 @@ No automatic metric replaces a person looking at the result, so LucidFace makes 
   original audio and timecode.
 - **GPU end to end.** Alignment, the lock, the temporal blend and paste-back are torch operations on
   the GPU. The reference script used the CPU for these and capped at 1.4 fps per worker.
+- **Never trust the colour matrix.** Piping RGB frames into an encoder without naming the matrix
+  makes ffmpeg use BT.601 while the file is tagged BT.709, so every player shows shifted colours. On
+  our client footage this tinted the restored face box by up to 3.7 levels in blue, a faint rectangle
+  on a flat wall. LucidFace names the matrix and uses accurate rounding on every read and write, and a
+  test (`test_video_roundtrip_has_no_colour_bias`) fails if a round trip drifts by more than 0.3 levels.
+  When compositing, measure the colour of the wall inside the replaced box against the original: it
+  should match to well under one level.
 
 ## Limits
 
