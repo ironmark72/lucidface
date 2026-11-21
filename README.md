@@ -31,7 +31,7 @@ real client footage, and each is backed by a benchmark anyone can rerun on publi
 ## Quick start
 
 ```bash
-git clone <this repo> lucidface && cd lucidface
+git clone https://github.com/ironmark72/lucidface && cd lucidface
 bash scripts/pod_setup.sh ~/models          # installs LucidFace, fetches CodeFormer + Restormer
 export LUCIDFACE_CODEFORMER_DIR=~/models/CodeFormer
 lucidface run interview.mp4 -o interview_fixed.mov
